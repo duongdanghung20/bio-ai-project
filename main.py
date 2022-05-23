@@ -49,6 +49,7 @@ class Apple:
         self.x = x
         self.y = y
         self.pos = Vector2(self.x, self.y)
+        self.eaten = False
 
 
     def draw(self, win):
@@ -154,98 +155,101 @@ class Snake:
     def add_block(self):
         self.new_block = True
 
-class Main:
-    def __init__(self):
-        self.snake = Snake()
-        self.apple = Apple(random.randint(0, NO_BINS_X - 1), random.randint(0, NO_BINS_Y - 1))
-        self.score = 0
-
-    def update(self):
-        self.snake.move()
-        self.check_collision()
-        self.check_fail()
-
-    def draw(self, win):
-        self.draw_bg(win)
-        self.draw_score(win)
-        self.snake.draw(win)
-        self.apple.draw(win)
-
-    def draw_bg(self, win):
-        # Draw the background
-        color_dark_green = True
-        last_dark = True
-        for i in range(NO_BINS_X):
-            if last_dark:
+def draw_bg(win):
+    # Draw the background
+    color_dark_green = True
+    last_dark = True
+    for i in range(NO_BINS_X):
+        if last_dark:
+            color_dark_green = False
+            last_dark = False
+        else:
+            color_dark_green = True
+            last_dark = True
+        for j in range(NO_BINS_Y):
+            bin = pygame.Rect(i * BIN_WIDTH, j * BIN_HEIGHT, BIN_WIDTH, BIN_HEIGHT)
+            if color_dark_green:
+                pygame.draw.rect(win, (92, 181, 92), bin)
                 color_dark_green = False
-                last_dark = False
             else:
+                pygame.draw.rect(win, (98, 209, 98), bin)
                 color_dark_green = True
-                last_dark = True
-            for j in range(NO_BINS_Y):
-                bin = pygame.Rect(i * BIN_WIDTH, j * BIN_HEIGHT, BIN_WIDTH, BIN_HEIGHT)
-                if color_dark_green:
-                    pygame.draw.rect(win, (92, 181, 92), bin)
-                    color_dark_green = False
-                else:
-                    pygame.draw.rect(win, (98, 209, 98), bin)
-                    color_dark_green = True
 
-    def draw_score(self, win):
-        score_text = STAT_FONT.render("Score: " + str(self.score), 1, (255, 255, 255))
-        win.blit(score_text, (WIN_WIDTH - 10 - score_text.get_width(), 10))
+def draw_window(win, snake, apples, score):
+    draw_bg(win)
 
-    def check_collision(self):
-        if self.apple.pos == self.snake.body[0]:
+    for apple in apples:
+        apple.draw(win)
+
+    score_text = STAT_FONT.render("Score: " + str(score), 1, (255, 255, 255))
+    win.blit(score_text, (WIN_WIDTH - 10 - score_text.get_width(), 10))
+
+    snake.draw(win)
+    pygame.display.update()
+
+def fail(snake):
+    self_hit = snake.body[0] in snake.body[1:]
+    wall_hit = snake.body[0].x < 0 or snake.body[0].x >= NO_BINS_X or snake.body[0].y < 0 or snake.body[0].y >= NO_BINS_Y
+    if self_hit or wall_hit:
+        return True
+    return False
+
+def main():
+    score = 0
+    snake = Snake()
+    init_apple_x = random.randint(0, NO_BINS_X - 1)
+    init_apple_y = random.randint(0, NO_BINS_Y - 1)
+    apples = [Apple(init_apple_x, init_apple_y)]
+
+    run = True
+
+    while run:
+        clock.tick(15)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+
+        snake.move()
+
+        keys = pygame.key.get_pressed()
+        current_snake_direction = snake.direction
+        if (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and current_snake_direction != VEC_LEFT and snake.moved:
+            snake.turn_right()
+        if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and current_snake_direction != VEC_RIGHT and snake.moved:
+            snake.turn_left()
+        if (keys[pygame.K_UP] or keys[pygame.K_w]) and current_snake_direction != VEC_DOWN and snake.moved:
+            snake.turn_up()
+        if (keys[pygame.K_DOWN] or keys[pygame.K_s]) and current_snake_direction != VEC_UP and snake.moved:
+            snake.turn_down()
+
+        apples_rmv = []
+        add_apple = False
+        for apple in apples:
+            if not apple.eaten and apple.pos == snake.body[0]:
+                apple.eaten = True
+                add_apple = True
+                apples_rmv.append(apple)
+
+        if add_apple:
+            score += 1
             while True:
                 new_apple_x , new_apple_y = (random.randint(0, NO_BINS_X - 1), random.randint(0, NO_BINS_Y - 1))
-                if (new_apple_x != self.apple.x or new_apple_y != self.apple.y) and (Vector2(new_apple_x, new_apple_y) not in self.snake.body):
+                if (new_apple_x != apple.x or new_apple_y != apple.y) and (Vector2(new_apple_x, new_apple_y) not in snake.body):
+                    apples.append(Apple(new_apple_x, new_apple_y))
                     break
-            self.apple = Apple(new_apple_x, new_apple_y)
-            self.snake.add_block()
-            self.score += 1
-            global GAME_SPEED
-            GAME_SPEED -= 2
-            pygame.time.set_timer(SCREEN_UPDATE, GAME_SPEED)
+            snake.add_block()
 
-    def check_fail(self):
-        self_hit = self.snake.body[0] in self.snake.body[1:]
-        wall_hit = self.snake.body[0].x < 0 or self.snake.body[0].x >= NO_BINS_X or self.snake.body[0].y < 0 or self.snake.body[0].y >= NO_BINS_Y
-        if self_hit or wall_hit:
-            print("Score =", self.score)
-            pygame.quit()
-            sys.exit()
+        for apple in apples_rmv:
+            apples.remove(apple)
 
-global GAME_SPEED
-GAME_SPEED = 90
-
-SCREEN_UPDATE = pygame.USEREVENT
-pygame.time.set_timer(SCREEN_UPDATE, GAME_SPEED) # 150 in miliseconds: update the screen every milisecond
-
-main_game = Main()
-
-run = True
-while run:
-    events = pygame.event.get()
-    for event in events:
-        if event.type == pygame.QUIT:
+        if fail(snake):
+            print(f"Score = {score}")
             run = False
-            pygame.quit()
-            sys.exit()
-        if event.type == SCREEN_UPDATE:
-            main_game.update()
+        
+        draw_window(win, snake, apples, score)
 
-    keys = pygame.key.get_pressed()
-    current_snake_direction = main_game.snake.direction
-    if (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and current_snake_direction != VEC_LEFT and main_game.snake.moved:
-        main_game.snake.turn_right()
-    if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and current_snake_direction != VEC_RIGHT and main_game.snake.moved:
-        main_game.snake.turn_left()
-    if (keys[pygame.K_UP] or keys[pygame.K_w]) and current_snake_direction != VEC_DOWN and main_game.snake.moved:
-        main_game.snake.turn_up()
-    if (keys[pygame.K_DOWN] or keys[pygame.K_s]) and current_snake_direction != VEC_UP and main_game.snake.moved:
-        main_game.snake.turn_down()
+    pygame.quit()
+    sys.exit()
 
-    main_game.draw(win)
-    pygame.display.update()
-    clock.tick(120) # Set Maximum FPS
+if __name__ == "__main__":
+    main()
