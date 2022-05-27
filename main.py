@@ -5,11 +5,12 @@ import random
 import os
 import pickle
 import math
+import argparse
+from neat.math_util import softmax
 from pygame.math import Vector2
-from sklearn import config_context
 
 
-NUMGEN = 50
+NUMGEN = 1000
 
 
 WIN_WIDTH = 900
@@ -44,9 +45,14 @@ SNAKE_BODY_TURN_IMG = pygame.image.load(os.path.join(IMGS_DIR, SNAKE_BODY_TURN_I
 SNAKE_TAIL_IMG = pygame.image.load(os.path.join(IMGS_DIR, SNAKE_TAIL_IMG_NAME)).convert_alpha()
 
 VEC_UP = Vector2(0, -1)
-VEC_DOWN = Vector2(0, 1)
+VEC_DOWN = -VEC_UP
 VEC_LEFT = Vector2(-1, 0)
-VEC_RIGHT = Vector2(1, 0)
+VEC_RIGHT = -VEC_LEFT
+
+def is_outside(vec):
+    if vec.x < 0 or vec.x >= NO_BINS_X or vec.y < 0 or vec.y >= NO_BINS_Y:
+        return True
+    return False
 
 global apple_pos
 
@@ -81,6 +87,8 @@ class Snake:
         self.tail_img = self.TAIL_IMG
         self.mid_imgs = []
         self.moved = False
+        self.count_turn = 0
+        self.total_turn = 0
 
     def draw(self, win):
         self.update_head()
@@ -149,157 +157,71 @@ class Snake:
             self.moved = True
 
     def turn_right(self):
-        self.direction = Vector2(1, 0)
-        self.moved = False
+        if self.direction != VEC_LEFT:
+            self.direction = VEC_RIGHT
+            self.moved = False
+            self.count_turn += 1
+            self.total_turn += 1
 
     def turn_left(self):
-        self.direction = Vector2(-1, 0)
-        self.moved = False
+        if self.direction != VEC_RIGHT:
+            self.direction = VEC_LEFT
+            self.moved = False
+            self.count_turn += 1
+            self.total_turn += 1
 
-    def turn_up(self):
-        self.direction = Vector2(0, -1)
-        self.moved = False
+    def turn_up(self): 
+        if self.direction != VEC_DOWN:
+            self.direction = VEC_UP
+            self.moved = False
+            self.count_turn += 1
+            self.total_turn += 1
 
     def turn_down(self):
-        self.direction = Vector2(0, 1)
-        self.moved = False
+        if self.direction != VEC_UP:
+            self.direction = VEC_DOWN
+            self.moved = False
+            self.count_turn += 1
+            self.total_turn += 1
+    
+    def ai_turn_left(self):
+        self.direction = self.direction.rotate(90)
+        self.count_turn += 1
+        self.total_turn += 1
+
+    def ai_turn_right(self):
+        self.direction = self.direction.rotate(-90)
+        self.count_turn += 1
+        self.total_turn += 1
 
     def add_block(self):
         self.new_block = True
+        self.count_turn = 0
 
-    def sensor_1(self):
+    def sensor(self):
         global apple_pos
-        temp = Vector2(self.body[0].x, self.body[0].y)
-        dist_to_wall = temp.y 
-        dist_to_apple = math.inf
-        dist_to_self = math.inf
-        counter = 0
-        while temp.y > 0:
-            counter += 1
-            temp += VEC_UP
-            if temp == apple_pos:
-                dist_to_apple = counter
-            if temp in self.body:
-                dist_to_self = counter
-        return dist_to_wall, dist_to_apple, dist_to_self
-
-    def sensor_2(self):
-        global apple_pos
-        temp = Vector2(self.body[0].x, self.body[0].y)
-        dist_to_wall = 0
-        dist_to_apple = math.inf
-        dist_to_self = math.inf
-        counter = 0
-        while temp.y > 0 and temp.x < NO_BINS_X - 1:
-            counter += 1
-            temp += VEC_UP + VEC_RIGHT
-            if temp == apple_pos:
-                dist_to_apple = counter
-            if temp in self.body:
-                dist_to_self = counter
-        dist_to_wall = counter
-        return dist_to_wall, dist_to_apple, dist_to_self
-
-    def sensor_3(self):
-        global apple_pos
-        temp = Vector2(self.body[0].x, self.body[0].y)
-        dist_to_wall = NO_BINS_X - temp.x - 1
-        dist_to_apple = math.inf
-        dist_to_self = math.inf
-        counter = 0
-        while temp.x < NO_BINS_X - 1:
-            counter += 1
-            temp += VEC_RIGHT
-            if temp == apple_pos:
-                dist_to_apple = counter
-            if temp in self.body:
-                dist_to_self = counter
-        return dist_to_wall, dist_to_apple, dist_to_self
-
-    def sensor_4(self):
-        global apple_pos
-        temp = Vector2(self.body[0].x, self.body[0].y)
-        dist_to_wall = 0
-        dist_to_apple = math.inf
-        dist_to_self = math.inf
-        counter = 0
-        while temp.y < NO_BINS_Y - 1 and temp.x < NO_BINS_X - 1:
-            counter += 1
-            temp += VEC_RIGHT + VEC_DOWN
-            if temp == apple_pos:
-                dist_to_apple = counter
-            if temp in self.body:
-                dist_to_self = counter
-        dist_to_wall = counter
-        return dist_to_wall, dist_to_apple, dist_to_self
-
-    def sensor_5(self):
-        global apple_pos
-        temp = Vector2(self.body[0].x, self.body[0].y)
-        dist_to_wall = NO_BINS_Y - temp.y - 1
-        dist_to_apple = math.inf
-        dist_to_self = math.inf
-        counter = 0
-        while temp.y < NO_BINS_Y - 1:
-            counter += 1
-            temp += VEC_DOWN
-            if temp == apple_pos:
-                dist_to_apple = counter
-            if temp in self.body:
-                dist_to_self = counter
-        return dist_to_wall, dist_to_apple, dist_to_self
-
-    def sensor_6(self):
-        global apple_pos
-        temp = Vector2(self.body[0].x, self.body[0].y)
-        dist_to_wall = 0
-        dist_to_apple = math.inf
-        dist_to_self = math.inf
-        counter = 0
-        while temp.y < NO_BINS_Y - 1 and temp.x > 0:
-            counter += 1
-            temp += VEC_DOWN + VEC_LEFT
-            if temp == apple_pos:
-                dist_to_apple = counter
-            if temp in self.body:
-                dist_to_self = counter
-        dist_to_wall = counter
-        return dist_to_wall, dist_to_apple, dist_to_self
-    
-    def sensor_7(self):
-        global apple_pos
-        temp = Vector2(self.body[0].x, self.body[0].y)
-        dist_to_wall = temp.x
-        dist_to_apple = math.inf
-        dist_to_self = math.inf
-        counter = 0
-        while temp.x > 0:
-            counter += 1
-            temp += VEC_LEFT
-            if temp == apple_pos:
-                dist_to_apple = counter
-            if temp in self.body:
-                dist_to_self = counter
-        return dist_to_wall, dist_to_apple, dist_to_self
-
-    def sensor_8(self):
-        global apple_pos
-        temp = Vector2(self.body[0].x, self.body[0].y)
-        dist_to_wall = 0
-        dist_to_apple = math.inf
-        dist_to_self = math.inf
-        counter = 0
-        while temp.y > 0 and temp.x > 0:
-            counter += 1
-            temp += VEC_UP + VEC_LEFT
-            if temp == apple_pos:
-                dist_to_apple = counter
-            if temp in self.body:
-                dist_to_self = counter
-        dist_to_wall = counter
-        return dist_to_wall, dist_to_apple, dist_to_self
-
-
+        self.tail_direction = self.body[-2] - self.body[-1]
+        vec_list = [VEC_UP, VEC_DOWN, VEC_LEFT, VEC_RIGHT]
+        direction_onehot = [self.direction == vec for vec in vec_list]
+        direction_onehot = list(map(int, direction_onehot))
+        tail_direction_onehot = [self.tail_direction == vec for vec in vec_list]
+        tail_direction_onehot = list(map(int, tail_direction_onehot))
+        sense = []
+        sense_dir = [VEC_UP, VEC_UP + VEC_RIGHT, VEC_RIGHT, VEC_RIGHT + VEC_DOWN, VEC_DOWN, VEC_DOWN + VEC_LEFT, VEC_LEFT, VEC_LEFT + VEC_UP]
+        for dir in sense_dir:
+            temp = Vector2(self.body[0].x, self.body[0].y)
+            dist_to_wall = 0
+            has_apple = 0
+            has_body = 0
+            while not is_outside(temp):
+                temp += dir
+                dist_to_wall += 1
+                if temp in self.body:
+                    has_body = 1
+                if temp == apple_pos:
+                    has_apple = 1
+            sense += [dist_to_wall, has_apple, has_body]
+        return tuple(sense + direction_onehot + tail_direction_onehot)
 
 def draw_bg(win):
     # Draw the background
@@ -335,13 +257,14 @@ def draw_window(win, snake, apples, score):
 
 def fail(snake):
     self_hit = snake.body[0] in snake.body[1:]
-    wall_hit = snake.body[0].x < 0 or snake.body[0].x >= NO_BINS_X or snake.body[0].y < 0 or snake.body[0].y >= NO_BINS_Y
+    wall_hit = is_outside(snake.body[0])
     if self_hit or wall_hit:
         return True
     return False
 
-def main(genomes, config):
+def eval_genomes(genomes, config):
     for _, g in genomes:
+        # net = neat.nn.RecurrentNetwork.create(g, config)
         net = neat.nn.FeedForwardNetwork.create(g, config)
         snake = Snake()
         g.fitness = 0
@@ -354,19 +277,15 @@ def main(genomes, config):
         run = True
 
         while run:
-            clock.tick(120)
+            # clock.tick(200)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
                     pygame.quit()
                     sys.exit()
 
-            apple_ind = 0
-            if len(apples) > 1 and snake.body[0] == apples[0].pos:
-                apple_ind = 1
-
-            g.fitness += 0.1
-            input = (*snake.sensor_1(), *snake.sensor_2(), *snake.sensor_3(), *snake.sensor_4(), *snake.sensor_5(), *snake.sensor_6(), *snake.sensor_7(), *snake.sensor_8())
+            global apple_pos
+            input = (snake.sensor())
             output = net.activate(input)
             if output[0] == max(output):
                 snake.turn_down()
@@ -376,8 +295,13 @@ def main(genomes, config):
                 snake.turn_right()
             if output[3] == max(output):
                 snake.turn_up()
-            
+
+            prev_dist = snake.body[0].distance_to(apple_pos)
             snake.move()
+            current_dist = snake.body[0].distance_to(apple_pos)
+            if current_dist < prev_dist:
+                g.fitness += 1
+            
 
             apples_rmv = []
             add_apple = False
@@ -389,7 +313,7 @@ def main(genomes, config):
 
             if add_apple:
                 score += 1
-                g.fitness += 5
+                g.fitness += 15
                 while True:
                     new_apple_x , new_apple_y = (random.randint(0, NO_BINS_X - 1), random.randint(0, NO_BINS_Y - 1))
                     if (new_apple_x != apple.x or new_apple_y != apple.y) and (Vector2(new_apple_x, new_apple_y) not in snake.body):
@@ -400,62 +324,13 @@ def main(genomes, config):
             for apple in apples_rmv:
                 apples.remove(apple)
 
-            if fail(snake):
-                g.fitness -= 2
-                # genomes.remove(g)
+            # g.fitness = snake.total_turn + (2 ** score + (score ** 2.1) * 500) - ((score ** 1.2) * (0.25 * snake.total_turn) ** 1.3)
+
+            if fail(snake) or snake.count_turn > 20:
+                g.fitness -= 50
                 run = False
             
-            draw_window(win, snake, apples, score)
-
-# def main():
-#     snake = Snake()
-
-#     init_apple_x = random.randint(0, NO_BINS_X - 1)
-#     init_apple_y = random.randint(0, NO_BINS_Y - 1)
-#     apples = [Apple(init_apple_x, init_apple_y)]
-
-#     score = 0
-#     run = True
-
-#     while run:
-#         clock.tick(15)
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 run = False
-#                 pygame.quit()
-#                 sys.exit()
-
-#         snake.move()
-#         # TODO
-
-#         apples_rmv = []
-#         add_apple = False
-#         for apple in apples:
-#             if not apple.eaten and apple.pos == snake.body[0]:
-#                 apple.eaten = True
-#                 add_apple = True
-#                 apples_rmv.append(apple)
-
-#         if add_apple:
-#             score += 1
-#             while True:
-#                 new_apple_x , new_apple_y = (random.randint(0, NO_BINS_X - 1), random.randint(0, NO_BINS_Y - 1))
-#                 if (new_apple_x != apple.x or new_apple_y != apple.y) and (Vector2(new_apple_x, new_apple_y) not in snake.body):
-#                     apples.append(Apple(new_apple_x, new_apple_y))
-#                     break
-#             snake.add_block()
-
-#         for apple in apples_rmv:
-#             apples.remove(apple)
-
-#         print(apple_pos)
-
-#         if fail(snake):
-#             print(f"Score = {score}")
-#             run = False
-        
-#         draw_window(win, snake, apples, score)
-
+            # draw_window(win, snake, apples, score)
 
 def run(config_path):
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
@@ -465,11 +340,145 @@ def run(config_path):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
 
-    winner = p.run(main, NUMGEN)
-    with open("best_bird_ge.p", "wb") as best_g:
+    winner = p.run(eval_genomes, NUMGEN)
+    with open("best_snake_ge.p", "wb") as best_g:
         pickle.dump(winner, best_g)
 
+def load_n_test(g, config_path):
+    config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
+    # net = neat.nn.RecurrentNetwork.create(g, config)
+    net = neat.nn.FeedForwardNetwork.create(g, config)
+    snake = Snake()
+
+    init_apple_x = random.randint(0, NO_BINS_X - 1)
+    init_apple_y = random.randint(0, NO_BINS_Y - 1)
+    apples = [Apple(init_apple_x, init_apple_y)]
+
+    score = 0
+    run = True
+
+    while run:
+        clock.tick(15)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+                sys.exit()
+
+        global apple_pos
+        input = (snake.sensor())
+        output = net.activate(input)
+        softmax_output = softmax(output)
+        index = softmax_output.index(max(softmax_output))
+        if index == 0:
+            snake.turn_right()
+        if index == 1:
+            snake.turn_left()
+        if index == 2:
+            snake.turn_up()
+        if index == 0:
+            snake.turn_down()
+        
+        snake.move()
+
+        apples_rmv = []
+        add_apple = False
+        for apple in apples:
+            if not apple.eaten and apple.pos == snake.body[0]:
+                apple.eaten = True
+                add_apple = True
+                apples_rmv.append(apple)
+
+        if add_apple:
+            score += 1
+            while True:
+                new_apple_x , new_apple_y = (random.randint(0, NO_BINS_X - 1), random.randint(0, NO_BINS_Y - 1))
+                if (new_apple_x != apple.x or new_apple_y != apple.y) and (Vector2(new_apple_x, new_apple_y) not in snake.body):
+                    apples.append(Apple(new_apple_x, new_apple_y))
+                    break
+            snake.add_block()
+
+        for apple in apples_rmv:
+            apples.remove(apple)
+
+        if fail(snake):
+            run = False
+        
+        draw_window(win, snake, apples, score)
+
+def play():
+    score = 0
+    snake = Snake()
+    init_apple_x = random.randint(0, NO_BINS_X - 1)
+    init_apple_y = random.randint(0, NO_BINS_Y - 1)
+    apples = [Apple(init_apple_x, init_apple_y)]
+
+    run = True
+
+    while run:
+        clock.tick(10)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+
+        snake.move()
+
+        keys = pygame.key.get_pressed()
+        current_snake_direction = snake.direction
+        if (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and current_snake_direction != VEC_LEFT and snake.moved:
+            snake.turn_right()
+        if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and current_snake_direction != VEC_RIGHT and snake.moved:
+            snake.turn_left()
+        if (keys[pygame.K_UP] or keys[pygame.K_w]) and current_snake_direction != VEC_DOWN and snake.moved:
+            snake.turn_up()
+        if (keys[pygame.K_DOWN] or keys[pygame.K_s]) and current_snake_direction != VEC_UP and snake.moved:
+            snake.turn_down()
+
+        apples_rmv = []
+        add_apple = False
+        for apple in apples:
+            if not apple.eaten and apple.pos == snake.body[0]:
+                apple.eaten = True
+                add_apple = True
+                apples_rmv.append(apple)
+
+        if add_apple:
+            score += 1
+            while True:
+                new_apple_x , new_apple_y = (random.randint(0, NO_BINS_X - 1), random.randint(0, NO_BINS_Y - 1))
+                if (new_apple_x != apple.x or new_apple_y != apple.y) and (Vector2(new_apple_x, new_apple_y) not in snake.body):
+                    apples.append(Apple(new_apple_x, new_apple_y))
+                    break
+            snake.add_block()
+
+        for apple in apples_rmv:
+            apples.remove(apple)
+
+        if fail(snake):
+            print(f"Score = {score}")
+            run = False
+
+        draw_window(win, snake, apples, score)
+
+    pygame.quit()
+    sys.exit()
+
+
 if __name__ == "__main__":
+    config_files = ['config-feedforward.txt', 'config-recurrent.txt']
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, 'config-feedforward.txt')
-    run(config_path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--test", help="Enable test mode on the given genome")
+    parser.add_argument("--play", help="Enable real-player mode", action="store_true")
+    args = parser.parse_args()
+
+    config_path = os.path.join(local_dir, config_files[0])
+
+    if args.test:
+        with open(args.test, "rb") as pickled_g:
+            g = pickle.load(pickled_g)
+        load_n_test(g, config_path=config_path)
+    elif args.play:
+        play()
+    else:
+        run(config_path)
