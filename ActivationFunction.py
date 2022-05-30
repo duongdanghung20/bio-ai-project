@@ -2,7 +2,10 @@ import numpy as np
 import math
 
 def sigmoid(x):
-    return 1.0 / (1.0 + math.exp(-x))
+    try:
+        return 1.0 / (1.0 + math.exp(-x))
+    except OverflowError:
+        return 0.0
 
 def relu(x):
     return max(x, 0)

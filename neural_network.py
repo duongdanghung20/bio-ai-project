@@ -1,4 +1,4 @@
-import numpy as np
+import random
 import math
 from ActivationFunction import sigmoid, relu, softmax, tanh, leaky_relu, linear
 
@@ -66,42 +66,38 @@ class FeedForwardNN:
             if connection.enable:
                 connection.node_out.add_connection(connection)
 
+    def activate(self, inputs):
+        for i, input_node in enumerate(self.input_layer.nodes):
+            input_node.val = inputs[i]
+
     def output(self):
+        self.setup_connections()
         output = []
         for node in self.output_layer.nodes:
             output.append(node.output())
+        output = softmax(output)
         return output
 
-def construct_nn(num_inputs, num_outputs, num_hidden_layers, num_nodes_layers):
-    for i in range(num_inputs):
-        
-
-
-if __name__ == "__main__":
-    x = Node('sigmoid', is_input_node=True, val=0)
-    y = Node('sigmoid', is_input_node=True, val=0)
-    input_layer = Layer([x, y])
-    z = Node('sigmoid')
-    t = Node('sigmoid')
-    hidden_layer = Layer([z, t])
-    o = Node('sigmoid')
-    output_layer = Layer([o])
-
+def feedforward_nn(genome):
+    input_layer = Layer([Node(is_input_node=True) for i in range(32)])
+    hidden_layer_1 = Layer([Node('relu') for i in range(20)])
+    hidden_layer_2 = Layer([Node('relu') for i in range(12)])
+    output_layer = Layer([Node('sigmoid') for i in range(4)])
+    connections = []
+    layers = [input_layer, hidden_layer_1, hidden_layer_2, output_layer]
+    gene_ind = 0
+    for i in range(len(layers) - 1):
+        for node_in in layers[i].nodes:
+            for node_out in layers[i + 1].nodes:
+                connections.append(Connection(node_in, node_out, genome[gene_ind])) #Add connections
+                gene_ind += 1
     b1 = Node(is_bias=True)
     b2 = Node(is_bias=True)
-
-    c1 = Connection(x, z, 8.)
-    c2 = Connection(x, t, 6.73)
-    c3 = Connection(y, z, -7.09) 
-    c4 = Connection(y, t, -6.07)   
-    c5 = Connection(b1, z, -4.1)
-    c6 = Connection(b1, t, 2.94)
-    c7 = Connection(z, o , 8.)
-    c8 = Connection(t, o, -8.)
-    c9 = Connection(b2, o, 3.78)
-
-    connections = [c1,c2,c3,c4,c5,c6,c7,c8,c9]
-    
-    ffnn = FeedForwardNN(input_layer, output_layer, [hidden_layer], connections)
-    ffnn.setup_connections()
-    print(ffnn.output())
+    b3 = Node(is_bias=True)
+    biases = [b1, b2, b3]
+    for i, bias in enumerate(biases):
+        for node in layers[i + 1].nodes:
+            connections.append(Connection(bias, node, genome[gene_ind]))
+            gene_ind += 1
+    ffnn = FeedForwardNN(input_layer, output_layer, [hidden_layer_1, hidden_layer_2], connections)
+    return ffnn
