@@ -15,7 +15,7 @@ with open(winner_path + 'winner.pkl', 'rb') as file:
 # Load the config file
 local_dir = os.path.dirname(__file__)
 #config_file = os.path.join(local_dir, CONFIG_PATHS[ENV_ID])
-config_file = '/home/ilmarilehtinen/code/git_repos/bio-ai-project/open-ai/bipedal/config-feedfw.txt'
+config_file = '/home/ilmarilehtinen/code/git_repos/bio-ai-project/open-ai/bipedal/config-bipedal.txt'
 config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                     neat.DefaultSpeciesSet, neat.DefaultStagnation,
                     config_file)

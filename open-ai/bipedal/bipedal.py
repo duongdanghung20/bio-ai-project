@@ -22,8 +22,6 @@ def eval_genome(genome, config):
     current_fitness = 0 
 
     done = False
-    counter = 0
-    #env.render()
     while not done:
         output = net.activate(observation)
         action = output
@@ -31,14 +29,11 @@ def eval_genome(genome, config):
         observation, reward, done, info = env.step(action=action)
 
         current_fitness += reward
-        counter += 1
 
         if current_fitness >= BEST_FITNESS:
             BEST_FITNESS = current_fitness
             #env.render()
-
         
-        time.sleep(0.001)
     genome.fitness = current_fitness
     
 
