@@ -8,10 +8,11 @@ import math
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from neat.math_util import softmax
 from genetic_algorithm import Population, crossover, mutate
 from neural_network import feedforward_nn
 from pygame.math import Vector2
+
+from new_test.snake_game import collision_with_apple
 
 
 NUMGEN = 30
@@ -34,8 +35,8 @@ bias_mut_std = 1.0
 WIN_WIDTH = 900
 WIN_HEIGHT = 900
 
-BIN_WIDTH = 90
-BIN_HEIGHT = 90
+BIN_WIDTH = 30
+BIN_HEIGHT = 30
 
 NO_BINS_X = int(WIN_WIDTH / BIN_WIDTH)
 NO_BINS_Y = int(WIN_HEIGHT / BIN_HEIGHT)
@@ -68,9 +69,7 @@ VEC_LEFT = Vector2(-1, 0)
 VEC_RIGHT = -VEC_LEFT
 
 def is_outside(vec):
-    if vec.x < 0 or vec.x >= NO_BINS_X or vec.y < 0 or vec.y >= NO_BINS_Y:
-        return True
-    return False
+    return vec.x < 0 or vec.x >= NO_BINS_X or vec.y < 0 or vec.y >= NO_BINS_Y
 
 global apple_pos
 global best_fitness
@@ -245,7 +244,7 @@ class Snake:
         direction_onehot = [self.direction == vec for vec in vec_list]
         direction_onehot = list(map(int, direction_onehot))
         tail_direction_onehot = [self.tail_direction == vec for vec in vec_list]
-        tail_direction_onehot = list(map(int, tail_direction_onehot))
+        tail_direction_onehot = list(map(int, tail_direction_onehot)) 
         sense = []
         sense_dir = [VEC_UP, VEC_UP + VEC_RIGHT, VEC_RIGHT, VEC_RIGHT + VEC_DOWN, VEC_DOWN, VEC_DOWN + VEC_LEFT, VEC_LEFT, VEC_LEFT + VEC_UP]
         for dir in sense_dir:
@@ -290,6 +289,44 @@ class Snake:
     #         dists_to_food.append(dist_to_food)
     #         dists_to_obj.append(dist_to_obj)
     #     return dists_to_food + dists_to_obj
+
+    def collision_with_self(self, head):
+        return head in self.body[1:]
+
+    def collision_with_wall(self, head):
+        return is_outside(head)
+
+    def angle_with_apple(self):
+        global apple_pos
+        apple_direction = apple_pos - self.direction
+        normalized_apple_direction = apple_direction.normalize()
+        normalized_self_direction = self.direction.normalize()
+        angle = math.radians(normalized_self_direction.angle_to(normalized_apple_direction))
+        return angle, self.direction, normalized_apple_direction, normalized_self_direction
+
+    def is_direction_blocked(self, direction_vector):
+        next_step = Vector2(self.body[0].x, self.body[0].y) + direction_vector
+        return self.collision_with_self(next_step) or self.collision_with_wall(next_step)
+
+    def blocked_directions(self):
+        left_dir_vec = Vector2(self.direction.y, -self.direction.x)
+        right_dir_vec = -left_dir_vec
+        is_front_blocked = self.is_direction_blocked(self.direction)
+        is_left_blocked = self.is_direction_blocked(left_dir_vec)
+        is_right_blocked = self.is_direction_blocked(right_dir_vec)
+        return self.direction, is_front_blocked, is_left_blocked, is_right_blocked
+
+    def generate_direction(new_direction):
+        dir_choice = 0
+        if new_direction == VEC_RIGHT:
+            dir_choice = 1
+        elif new_direction == VEC_LEFT:
+            dir_choice = 0
+        elif new_direction == VEC_DOWN:
+            dir_choice = 2
+        elif new_direction == VEC_UP:
+            dir_choice = 3
+        return dir_choice   
 
 
 def draw_bg(win):
@@ -364,17 +401,19 @@ def eval_genomes(genomes, config):
             output = net.activate(input)
             index = output.index(max(output))
             if index == 0:
-                snake.ai_turn_right()
+                snake.turn_right()
             if index == 1:
-                snake.ai_turn_left()
+                snake.turn_left()
             if index == 2:
-                pass
+                snake.turn_up()
+            if index == 3:
+                snake.turn_down()
 
             prev_dist = snake.body[0].distance_to(apple_pos)
             snake.move()
             current_dist = snake.body[0].distance_to(apple_pos)
             if current_dist < prev_dist:
-                g.fitness += 15
+                g.fitness += 15 
             
 
             apples_rmv = []
@@ -666,7 +705,7 @@ def load_n_test(g, config_path):
         for apple in apples_rmv:
             apples.remove(apple)
 
-        if fail(snake):
+        if fail(snake) and snake.count_turn > 20:
             run = False
         
         draw_window(win, snake, apples, score)
@@ -797,25 +836,25 @@ def play():
 
 
 if __name__ == "__main__":
-    # config_files = ['config-feedforward.txt', 'config-recurrent.txt']
-    # local_dir = os.path.dirname(__file__)
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("--test", help="Enable test mode on the given genome")
-    # parser.add_argument("--play", help="Enable real-player mode", action="store_true")
-    # args = parser.parse_args()
+    config_files = ['config-feedforward.txt', 'config-recurrent.txt']
+    local_dir = os.path.dirname(__file__)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--test", help="Enable test mode on the given genome")
+    parser.add_argument("--play", help="Enable real-player mode", action="store_true")
+    args = parser.parse_args()
 
-    # config_path = os.path.join(local_dir, config_files[0])
+    config_path = os.path.join(local_dir, config_files[0])
 
-    # if args.test:
-    #     with open(args.test, "rb") as pickled_g:
-    #         g = pickle.load(pickled_g)
-    #     load_n_test(g, config_path=config_path)
-    # elif args.play:
-    #     play()
-    # else:
-    #     run(config_path)
+    if args.test:
+        with open(args.test, "rb") as pickled_g:
+            g = pickle.load(pickled_g)
+        load_n_test(g, config_path=config_path)
+    elif args.play:
+        play()
+    else:
+        run(config_path)
 
-    main()
+    # main()
     
     # with open('best_snake_ge_2.p', 'rb') as pickled_g:
     #     g = pickle.load(pickled_g)
