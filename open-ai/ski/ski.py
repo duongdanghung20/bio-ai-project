@@ -6,8 +6,9 @@ import time
 import cv2
 import multiprocessing
 
-
-
+"""
+UNDER DEVELOPEMENT, DOES NOT RUN CORRECTLY
+"""
 
 NUM_GENERATIONS = 50
 

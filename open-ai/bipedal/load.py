@@ -5,10 +5,12 @@ import os
 import time
 import numpy as np
 
+
 winner_path = '/home/ilmarilehtinen/code/git_repos/bio-ai-project/open-ai/bipedal/'
+genome = '/home/ilmarilehtinen/code/git_repos/bio-ai-project/open-ai/bipedal/winner.pkl'
 
 
-with open(winner_path + 'winner.pkl', 'rb') as file:
+with open(genome, 'rb') as file:
     winner = pickle.load(file)
     print("\nWinner: ", winner, "\n")
 
