@@ -14,8 +14,8 @@ from neural_network import feedforward_nn
 from pygame.math import Vector2
 
 
-NUMGEN = 30
-POP_SIZE = 100
+NUMGEN = 50
+POP_SIZE = 30000
 GENOME_LENGTH = 32 * 20 + 20 + 20 * 12 + 12 + 12 * 4 + 4
 NUM_WEIGHTS = 32 * 20 + 20 * 12 + 12 * 4
 MU = 10                     # Number of pairs parents chosen for crossover
@@ -31,8 +31,8 @@ weight_mut_std = 1.0
 bias_mut_std = 1.0
 
 
-WIN_WIDTH = 900
-WIN_HEIGHT = 900
+WIN_WIDTH = 600
+WIN_HEIGHT = 600
 
 BIN_WIDTH = 30
 BIN_HEIGHT = 30
@@ -298,10 +298,13 @@ class Snake:
     def angle_with_apple(self):
         global apple_pos
         apple_direction = apple_pos - self.direction
-        normalized_apple_direction = apple_direction.normalize()
+        if apple_direction.length() == 0:
+            normalized_apple_direction = Vector2(math.inf, math.inf)
+        else:
+            normalized_apple_direction = apple_direction.normalize()
         normalized_self_direction = self.direction.normalize()
         angle = math.radians(normalized_self_direction.angle_to(normalized_apple_direction))
-        return angle, self.direction, normalized_apple_direction, normalized_self_direction
+        return angle, self.direction.x, self.direction.y, normalized_apple_direction.x, normalized_apple_direction.y, normalized_self_direction.x, normalized_self_direction.y
 
     def is_direction_blocked(self, direction_vector):
         next_step = Vector2(self.body[0].x, self.body[0].y) + direction_vector
@@ -313,7 +316,7 @@ class Snake:
         is_front_blocked = self.is_direction_blocked(self.direction)
         is_left_blocked = self.is_direction_blocked(left_dir_vec)
         is_right_blocked = self.is_direction_blocked(right_dir_vec)
-        return self.direction, is_front_blocked, is_left_blocked, is_right_blocked
+        return self.direction.x, self.direction.y, is_front_blocked, is_left_blocked, is_right_blocked
 
     def generate_direction(new_direction):
         dir_choice = 0
@@ -396,17 +399,31 @@ def eval_genomes(genomes, config):
                     sys.exit()
 
             global apple_pos
-            input = (snake.sensor())
+            # input = (snake.sensor())
+            input = (*snake.blocked_directions(), *snake.angle_with_apple())
             output = net.activate(input)
             index = output.index(max(output))
+
+            # Regarding player's perspective
+            # Remember to change num_outputs = 4 in config fle
+            # if index == 0:
+            #     snake.turn_right()
+            # if index == 1:
+            #     snake.turn_left()
+            # if index == 2:
+            #     snake.turn_up()
+            # if index == 3:
+            #     snake.turn_down()
+
+
+            # Regarding snake's perspective
+            # Remember to change num_outputs = 3 in config file
             if index == 0:
-                snake.turn_right()
+                snake.ai_turn_right()
             if index == 1:
-                snake.turn_left()
+                snake.ai_turn_left()
             if index == 2:
-                snake.turn_up()
-            if index == 3:
-                snake.turn_down()
+                pass
 
             prev_dist = snake.body[0].distance_to(apple_pos)
             snake.move()
@@ -676,7 +693,7 @@ def load_n_test(g, config_path):
                 sys.exit()
 
         global apple_pos
-        input = (snake.sensor())
+        input = (*snake.blocked_directions(), *snake.angle_with_apple())
         output = net.activate(input)
         index = output.index(max(output))
         if index == 0:
@@ -708,7 +725,7 @@ def load_n_test(g, config_path):
         for apple in apples_rmv:
             apples.remove(apple)
 
-        if fail(snake) and snake.count_turn > 20:
+        if fail(snake) or snake.count_turn > 20:
             run = False
         
         draw_window(win, snake, apples, score)
