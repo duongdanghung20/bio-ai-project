@@ -1,0 +1,7 @@
+neat-python
+gym==0.24.0
+gym[box2D]
+gym[mujoco]
+graphviz
+tqdm
+
