@@ -8,11 +8,10 @@ import math
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from visualize import *
 from genetic_algorithm import Population, crossover, mutate
 from neural_network import feedforward_nn
 from pygame.math import Vector2
-
-from new_test.snake_game import collision_with_apple
 
 
 NUMGEN = 30
@@ -452,7 +451,7 @@ def eval_genomes(genomes, config):
                 g.fitness -= 99999
                 run = False
             
-            draw_window(win, snake, apples, score)
+            # draw_window(win, snake, apples, score)
 
 def main():
     global best_fitness
@@ -647,9 +646,13 @@ def run(config_path):
 
     winner = p.run(eval_genomes, NUMGEN)
     with open("best_snake_ge.p", "wb") as best_g:
-        # pickle.dump(winner, best_g)
-        global best_ge
-        pickle.dump(best_ge, best_g)
+        pickle.dump(winner, best_g)
+        # global best_ge
+        # pickle.dump(best_ge, best_g)
+
+    draw_net(config, winner, True)
+    plot_stats(stats, ylog=False, view=True)
+    plot_species(stats, view=True)
 
 def load_n_test(g, config_path):
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction, neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
