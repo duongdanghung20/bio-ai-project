@@ -1,3 +1,5 @@
 pygame
 neat-python
 argparse
+gym
+graphviz
