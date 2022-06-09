@@ -11,6 +11,7 @@
     * Car Racing
     * Humanoid
 * The first game was programmed using pygame, while the others use the environments provided by Open-AI Gym Library.
+* All the environments were tested using NEAT algorithm provided by neat-python library. Whereas the Snake-Xenzia game is also tested by developing Evolutionary Algorithm and Neural Networks from scratch.
 
 ## Credits
 | Student name       | Matriculation Number    | GitHub account                                      |
