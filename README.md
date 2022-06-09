@@ -17,7 +17,7 @@
 | Student name       | Matriculation Number    | GitHub account                                      |
 | :-----------------:|:-------------:|:---------------------------------------------------:|
 | Dang-Hung Duong   | 233277      |[duongdanghung20](https://github.com/duongdanghung20)|
-| Ilmari Lehtinen     |      |[ilmarilehtinen](https://github.com/ilmarilehtinen)                  | 
+| Ilmari Lehtinen     | 233812     |[ilmarilehtinen](https://github.com/ilmarilehtinen)                  | 
 | Enrico Micheli  |     |[Roshindow](https://github.com/Roshindow)                  | 
 | Dinh-Dung Van    |      |[Dung-Van](https://github.com/Dung-Van)                | 
 
