@@ -1,6 +1,7 @@
 # AI plays game with Neuro-evolution
 
 ## Description
+* This project was created to do the final examination of __Bio-Inspired Artificial Intelligence__ course in University of Trento, 2021/2022 (Spring Semester).
 * __Neuro Evolution__: A type of Artificial Intelligence that uses Evolutionary Algorithms to generate Artificial Neural Networks (ANN), parameters, topology and rules.
 * This is a project applied Neuro Evolution to create AI agents that automatically play simple computer games.
 * The games included:
@@ -14,7 +15,7 @@
 ## Credits
 | Student name       | Matriculation Number    | GitHub account                                      |
 | :-----------------:|:-------------:|:---------------------------------------------------:|
-| Duong Dang Hung    | 233277      |[duongdanghung20](https://github.com/duongdanghung20)|
+| Dang-Hung Duong   | 233277      |[duongdanghung20](https://github.com/duongdanghung20)|
 | Ilmari Lehtinen     |      |[ilmarilehtinen](https://github.com/ilmarilehtinen)                  | 
 | Enrico Micheli  |     |[Roshindow](https://github.com/Roshindow)                  | 
 | Dinh-Dung Van    |      |[Dung-Van](https://github.com/Dung-Van)                | 
