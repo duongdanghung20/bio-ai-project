@@ -1,3 +1,7 @@
+"""
+Script from https://github.com/sroj/neat-openai-gym under MIT License
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import graphviz
