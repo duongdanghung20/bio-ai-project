@@ -24,15 +24,15 @@
 
 ## References
 This work is based on:
-* https://www.youtube.com/watch?v=8dfePlONtls
-* https://www.youtube.com/watch?v=MMxFDaIOHsE&list=PLzMcBGfZo4-lwGZWXz5Qgta_YNX3_vLS2
-* https://www.youtube.com/watch?v=vhiO4WsHA6c
-* https://www.youtube.com/watch?v=jXJbS6FoJyE
-* https://neat-python.readthedocs.io/en/latest/
-* https://www.gymlibrary.ml/
-* https://github.com/openai/gym
-* https://www.gymlibrary.ml/environments/mujoco/humanoid/
-* https://www.gymlibrary.ml/environments/box2d/bipedal_walker/
-* https://www.gymlibrary.ml/environments/box2d/car_racing/
-* https://www.gymlibrary.ml/environments/box2d/lunar_lander/
+* [Code a Snake Game with Python and Pygame](https://www.youtube.com/watch?v=8dfePlONtls)
+* [AI Plays Flappy Bird - NEAT Python](https://youtube.com/playlist?list=PLzMcBGfZo4-lwGZWXz5Qgta_YNX3_vLS2)
+* [AI Learns to play Snake](https://www.youtube.com/watch?v=vhiO4WsHA6c)
+* [CODING ARTIFICIAL INTELLIGENCE SNAKE using NEAT](https://www.youtube.com/watch?v=jXJbS6FoJyE)
+* [neat-python documents](https://neat-python.readthedocs.io/en/latest/)
+* [Gym Library by Open-AI](https://www.gymlibrary.ml/)
+* [Gym Library by Open-AI Repository](https://github.com/openai/gym)
+* [Humanoid API - Gym](https://www.gymlibrary.ml/environments/mujoco/humanoid/)
+* [Bipedal Walker API - Gym](https://www.gymlibrary.ml/environments/box2d/bipedal_walker/)
+* [Car Racing API - Gym](https://www.gymlibrary.ml/environments/box2d/car_racing/)
+* [Lunar Lander API - Gym](https://www.gymlibrary.ml/environments/box2d/lunar_lander/)
 
